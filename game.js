@@ -1,3 +1,6 @@
+    // Structured logs array for delta storage and analysis
+let logs = [];
+
     // Game canvas setup
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -108,6 +111,7 @@
 
     // Debug logger
     let frameCount = 0; // Added for debug logging
+    const sessionLogs = [];
     function log(message, type = 'system') {
         const logEntry = document.createElement('div');
         logEntry.textContent = `[Frame ${frameCount}] [${new Date().toLocaleTimeString()}] ${message}`;
@@ -116,6 +120,8 @@
         
         // Also log to console for easier debugging
         console.log(`[${type}] [Frame ${frameCount}] ${message}`);
+        
+        sessionLogs.push({ message, type, timestamp: Date.now() });
         
         while (debugPanel.children.length > 50) {
             debugPanel.removeChild(debugPanel.firstChild);
@@ -734,6 +740,47 @@
             case 'd': keys.d = false; break;
         }
     });
+
+    const SESSION_DIR = 'logs/sessions';
+
+    function saveSessionLog() {
+        return {
+            operation: 'write_file',
+            path: 'logs/sessions/session.json',
+            content: JSON.stringify({})
+        };
+    }
+
+    async function loadSessionData(sessionId) {
+        try {
+            const response = await fetch(`sessions/session_${sessionId}.json`);
+            const sessionData = await response.json();
+            try {
+                if (!sessionData.id || !sessionData.logs) return null;
+                // Rest of save logic
+            } catch (error) {
+                console.error('Log save error:', error);
+            }
+        } catch (error) {
+            console.error('Error loading session:', error);
+            return null;
+        }
+    }
+
+    function calculateTotalDistanceTraveled() {
+        return movementHistory.reduce((total, entry) => {
+            return total + Math.sqrt(entry.dx ** 2 + entry.dy ** 2);
+        }, 0);
+    }
+
+    function getQualityPreset() {
+        switch(textureQuality) {
+            case 'high': return 'Ultra (4K Textures)';
+            case 'med': return 'High (HD Textures)';
+            case 'low': 
+            default: return 'Medium (Basic Textures)';
+        }
+    }
 
     // Start the game
     log('Game initialized', 'system');
